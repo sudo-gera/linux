@@ -101,7 +101,7 @@ async function create_v86(){
                     document.getElementById('log').value=document.getElementById('log').value.slice(0,-1);                    
                 }else{
                     document.getElementById('log').value+=char;
-                    if (char=='\n'){
+                    if (char=='\n' || char == '\r'){
                         l=document.getElementById('log');
                         l.scrollTop = l.scrollHeight;
                     }
