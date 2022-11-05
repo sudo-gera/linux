@@ -1,0 +1,1 @@
+(()=>{d=document;e=d.createElement('iframe');e.setAttribute('src','http://localhost:8000/index.html');document.querySelector("#workbench\\.parts\\.activitybar > div > div.composite-bar > div > ul").appendChild(e);})()
