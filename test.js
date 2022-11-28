@@ -1,30 +1,42 @@
 "use strict";
 
-function encodeBase64 (data) {
-    if (typeof Buffer!=='undefined'){
-        return Buffer.from(data).toString('base64');
-    }else{
-        return window.btoa(data);
-    }
-}
+// function encodeBase64 (data) {
+//     if (typeof Buffer!=='undefined'){
+//         return Buffer.from(data).toString('base64');
+//     }else{
+//         return window.btoa(data);
+//     }
+// }
 
-function decodeBase64 (data) {
-    if (typeof Buffer!=='undefined'){
-        return Buffer.from(data, 'base64').toString('ascii');
-    }else{
-        return window.atob(data);
-    }
-}
+// function decodeBase64 (data) {
+//     if (typeof Buffer!=='undefined'){
+//         return Buffer.from(data, 'base64').toString('ascii');
+//     }else{
+//         return window.atob(data);
+//     }
+// }
 
-async function blobToBase64(blob) {
-    var a=await (new Promise((resolve, _) => {
+async function blob_to_b64url(blob) {
+    return await (new Promise((resolve, _) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
         reader.readAsDataURL(blob);
     }));
-    a=a.slice(1+a.indexOf(','));
-    return a;
 }
+
+function b64url_to_b64(b64url) {
+    return b64url.slice(1+a.indexOf(','));
+}
+
+
+async function blob_to_u8a(blob){
+    return new Uint8Array(await blob.arrayBuffer());
+}
+
+function u8a_to_blob(u8a){
+    return new Blob([u8a]);
+}
+
 
 function readFileAsync(file) {
     return new Promise((resolve, reject) => {
@@ -155,36 +167,42 @@ function send(e,q){
     e.serial0_send(q);
 }
 
-async function pushb64(em,text,name,tmp){
-    input_buffer=text
-    send(em,'lua /root/receive.lua /mnt/input.mnt "'+tmp+'" '+text.length+'\n');
-    send(em,'cat "'+tmp+'" | base64 -d > "'+name+'"\n');
+async function pushu8a(em,u8a,name){
+    return new Promise((resolve)=>{
+        callback=resolve;
+        input_buffer=u8a;
+        send(em,'lua /root/receive.lua /mnt/input.mnt "'+name+'" '+u8a.length+'\n');
+        // send(em,'cat /mnt/tmp.txt | base64 -d > "'+name+'"\n');
+        send(em,'echo "callback()" > /mnt/js.mnt\n');
+    });
 }
 
-async function pushblob(em,text,name,tmp){
-    text=await blobToBase64(text);
-    await pushb64(em,text,name,tmp);
+async function popu8a(em,name){
+    return new Promise((resolve)=>{
+        callback=()=>{
+            output_buffer_shrink();
+            resolve(output_buffer);
+        }
+        output_buffer=new Uint8Array();
+        output_buffer_len=0;
+        send(em,'cat "'+name+'" > /mnt/output.mnt\n');
+        send(em,'echo "callback()" > /mnt/js.mnt\n');
+    });
 }
 
-async function pushtext(em,url,name,tmp){
+async function popurl(em,name){
+    var u8a=await popu8a(em,name);
+    return await blob_to_b64url(await u8a_to_blob(u8a));
+}
+
+async function pushblob(em,blob,name){
+    blob=await blob_to_u8a(blob);
+    return await pushu8a(em,blob,name);
+}
+
+async function pushurl(em,url,name){
     var text=(await( (await fetch(url)).blob()))
-    await pushblob(em,text,name,tmp);
-}
-
-async function write_proxy(a,b,c,d){
-    if (a==1){
-        d=new TextDecoder().decode(d);
-        d=await eval(d);
-        d=new TextEncoder().encode(d);
-        return [a,b,c,d];
-    }else
-    if (a==2){
-        d=input_buffer.slice(b,b+c);
-        d=new TextEncoder().encode(d);
-        return [a,b,c,d];
-    }else{
-        return [a,b,c,d];
-    }
+    return await pushblob(em,text,name);
 }
 
 window.onload=async function(){
@@ -224,7 +242,7 @@ window.onload=async function(){
         if(this.files.length)
         {
 
-            var r=await blobToBase64(this.files[0]);
+            var r=await b64url_to_b64(await blob_to_b64url(this.files[0]));
 
             pushb64(window.____em,r,'/mnt/uploads/'+this.files[0].name,'/mnt/tmp.txt')
 
@@ -254,5 +272,53 @@ if (typeof module!=='undefined'){
         send:send,
     };
 }
-var input_buffer=''
+
+async function write_proxy(a,b,c,d){
+    // console.log([a,b,c,d]);
+    if (a==1){
+        d=new TextDecoder().decode(d);
+        d=await eval(d);
+        d=new TextEncoder().encode(d);
+        return [a,b,c,d];
+    }else
+    if (a==2){
+        for (var w=0;w<c;++w){
+            d[w]=input_buffer[w+b];
+        }
+        return [a,b,c,d];
+    }else
+    if (a==3){
+        if (output_buffer_len<b+c){
+            output_buffer_resize(b+c);
+        }
+        for (var w=0;w<c;++w){
+            output_buffer[w+b]=d[w];
+        }
+        return [a,b,c,d];
+    }else{
+        return [a,b,c,d];
+    }
+}
+
+function output_buffer_resize(l){
+    output_buffer_reserve(l);
+    output_buffer_len=l;
+}
+
+function output_buffer_shrink(){
+    output_buffer=output_buffer.slice(0,output_buffer_len);
+}
+
+function output_buffer_reserve(l){
+    if (output_buffer.length<l){
+        var tmp=new Uint8Array(output_buffer.length*2>l?output_buffer.length*2:l);
+        tmp.set(output_buffer);
+        output_buffer=tmp;
+    }
+}
+
+var input_buffer=new Uint8Array();
+var output_buffer=new Uint8Array();
+var output_buffer_len=0;
+var callback=null;
 
