@@ -64,7 +64,6 @@ async function set_create_menu(){
     var ssd=s.style.display;
     var l=document.getElementById('loading');
     var lsd=l.style.display;
-    l.src='/loading.gif';
     l.style.width='100%';
     s.name='creator';
     s.id='creator';
