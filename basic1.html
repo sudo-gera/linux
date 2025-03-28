@@ -1,0 +1,38 @@
+<!doctype html>
+<title>Basic Emulator</title><!-- not BASIC! -->
+
+<script src="./build/libv861.js"></script>
+<script>
+"use strict";
+
+window.onload = function()
+{
+    var emulator = window.emulator = new V86Starter({
+        wasm_path: "./build/v86.wasm",
+        memory_size: 128 * 1024 * 1024,
+        vga_memory_size: 8 * 1024 * 1024,
+        screen_container: document.getElementById("screen_container"),
+        screen_dummy: true,
+        bios: {
+            url: "./bios/seabios.bin",
+        },
+        vga_bios: {
+            url: "./bios/vgabios.bin",
+        },
+        cdrom: {
+            // url: "./images/linux.iso",
+            url: "./tinycore.iso",
+            // url: "./alpine.iso",
+        },
+        autostart: true,
+        network_relay_url:"wss://relay.widgetry.org/",
+        filesystem: {},
+    });
+}
+</script>
+
+<!-- A minimal structure for the ScreenAdapter defined in browser/screen.js -->
+<div id="screen_container">
+    <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
+    <canvas style="display: none"></canvas>
+</div>

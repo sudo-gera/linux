@@ -1,4 +1,5 @@
 ;
+var injection={};
 (function() {
     'use strict';
     var $jscomp = $jscomp || {};
@@ -15,6 +16,7 @@
         a[b] = c.value;
         return a
     };
+
     $jscomp.getGlobal = function(a) {
         a = ["object" == typeof globalThis && globalThis, a, "object" == typeof window && window, "object" == typeof self && self, "object" == typeof global && global];
         for (var b = 0; b < a.length; ++b) {
@@ -29,6 +31,7 @@
     $jscomp.polyfills = {};
     $jscomp.propertyToPolyfillSymbol = {};
     $jscomp.POLYFILL_PREFIX = "$jscp$";
+
     var $jscomp$lookupPolyfilledValue = function(a, b) {
         var c = $jscomp.propertyToPolyfillSymbol[b];
         if (null == c) return a[b];
@@ -10877,6 +10880,12 @@
     })();
 
     function V86Starter(a) {
+        if (typeof a.write_proxy !== 'undefined'){
+            injection.write_proxy=a.write_proxy;
+        }
+        if (typeof a.read_proxy !== 'undefined'){
+            injection.read_proxy=a.read_proxy;
+        }
         this.cpu_is_running = !1;
         var b = Bus.create();
         this.bus = b[0];
@@ -11990,11 +11999,13 @@
         return 0
     };
     FS.prototype.Write = async function(a, b, c, d) {
-        var _1 = await write_proxy(a, b, c, d);
-        a = _1[0];
-        b = _1[1];
-        c = _1[2];
-        d = _1[3];
+        if (typeof injection.write_proxy !== 'undefined'){
+            var _1 = await injection.write_proxy(a, b, c, d);
+            a = _1[0];
+            b = _1[1];
+            c = _1[2];
+            d = _1[3];
+        }
         this.NotifyListeners(a, "write");
         var e = this.inodes[a];
         if (this.is_forwarder(e)) a = e.foreign_id, await this.follow_fs(e).Write(a, b, c, d);
@@ -12008,7 +12019,13 @@
     FS.prototype.Read = async function(a, b, c) {
         const d = this.inodes[a];
         var r = this.is_forwarder(d) ? (a = d.foreign_id, await this.follow_fs(d).Read(a, b, c)) : await this.get_data(a, b, c)
-        // console.log(r);
+        if (typeof injection.read_proxy !== 'undefined'){
+            var _1 = await injection.read_proxy(a, b, c, r);
+            a = _1[0];
+            b = _1[1];
+            c = _1[2];
+            r = _1[3];
+        }
         return r;
     };
     FS.prototype.Search = function(a, b) {

@@ -1525,10 +1525,37 @@ function Va(a, b) {
                 url: "bios/" + K
             }
         }
+        // console.log(JSON.stringify({
+        //     memory_size: p,
+        //     vga_memory_size: r,
+        //     screen_container: c("screen_container"),
+        //     serial_container_xtermjs: c("terminal"),
+        //     boot_order: m.oc || parseInt(c("boot_order").value, 16) || 0,
+        //     // network_relay_url: l ? "ws://localhost:3100/" : w,
+        //     network_relay_url: l ? "wss://relay.widgetry.org/" : w,
+        //     bios: B,
+        //     vga_bios: F,
+        //     fda: m.ma,
+        //     hda: m.M,
+        //     hdb: m.He,
+        //     cdrom: m.fa,
+        //     multiboot: m.ed,
+        //     bzimage: m.ub,
+        //     initrd: m.Xc,
+        //     cmdline: m.Pc,
+        //     bzimage_initrd_from_filesystem: m.ef,
+        //     acpi: C,
+        //     initial_state: m.Wc,
+        //     filesystem: m.filesystem || {},
+        //     disable_speaker: x,
+        //     mac_address_translation: m.Gb,
+        //     autostart: !0
+        // }));
+
         var N = new Xa({
             memory_size: p,
             vga_memory_size: r,
-            screen_container: c("screen_container"),
+            // screen_container: c("screen_container"),
             serial_container_xtermjs: c("terminal"),
             boot_order: m.oc || parseInt(c("boot_order").value, 16) || 0,
             // network_relay_url: l ? "ws://localhost:3100/" : w,
